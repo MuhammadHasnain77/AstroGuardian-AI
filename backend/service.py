@@ -15,8 +15,10 @@ def stale_hours() -> float | None:
 
 def evaluate_astronaut(aid: str) -> dict:
     a = db.astronaut(aid) or {}
+    from . import space_weather
     return evaluate(db.readings_df(aid), stale_after_hours=stale_hours(),
-                    context={"prior_career_dose_msv": a.get("prior_career_dose_msv", 0)},
+                    context={"prior_career_dose_msv": a.get("prior_career_dose_msv", 0),
+                             "space_weather": space_weather.engine_context()},
                     carry_forward_hours=float(os.getenv("SENSOR_CARRY_HOURS", "12")))
 
 

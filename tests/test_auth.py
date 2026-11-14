@@ -1,61 +1,44 @@
-"""Password gate, role choice, and per-role permissions (enforced server-side)."""
+"""Role choice (no password) and per-role permissions, enforced server-side."""
 
 import pytest
 
 from tests.conftest import login
 
 
-def test_everything_locked_without_password(client):
+def test_everything_needs_a_role(client):
     for path in ("/api/crew", "/api/alerts", "/api/config", "/api/astronauts/ASTRO_01"):
         assert client.get(path).status_code == 401
     assert client.get("/api/health").status_code == 200
 
 
-def test_wrong_password_rejected(client):
-    assert client.post("/api/auth/unlock", json={"password": "SpaceX"}).status_code == 401
-    assert client.get("/api/auth/state").json() == {"unlocked": False, "user": None}
+def test_no_password_endpoint(client):
+    assert client.post("/api/auth/unlock", json={"password": "NASA"}).status_code in (404, 405)
 
 
-def test_password_is_case_insensitive(client):
-    assert client.post("/api/auth/unlock", json={"password": " nasa "}).status_code == 200
-
-
-def test_password_attempts_are_throttled(client):
-    for _ in range(10):
-        client.post("/api/auth/unlock", json={"password": "bad"})
-    assert client.post("/api/auth/unlock", json={"password": "NASA"}).status_code == 429
-
-
-def test_unlocked_but_no_role_is_still_blocked(client):
-    client.post("/api/auth/unlock", json={"password": "NASA"})
+def test_role_picker_is_open_without_a_password(client):
     state = client.get("/api/auth/state").json()
-    assert state["unlocked"] and state["user"] is None
+    assert state["user"] is None
     assert {r["id"] for r in state["roles"]} == {"astronaut", "cmo", "ground"}
-    assert client.get("/api/crew").status_code == 401
-
-
-def test_role_requires_password_first(client):
-    assert client.post("/api/auth/role", json={"role": "cmo"}).status_code == 401
+    assert len(state["astronauts"]) == 3
+    assert client.post("/api/auth/role", json={"role": "cmo"}).status_code == 200
+    assert client.get("/api/crew").status_code == 200
 
 
 def test_astronaut_role_requires_identity(client):
-    client.post("/api/auth/unlock", json={"password": "NASA"})
     assert client.post("/api/auth/role", json={"role": "astronaut"}).status_code == 422
     assert client.post("/api/auth/role", json={"role": "astronaut", "astronaut_id": "NOPE"}).status_code == 422
 
 
 def test_forged_cookie_rejected(client):
-    client.cookies.set("ag_session", "eyJnYXRlIjp0cnVlLCJyb2xlIjoiY21vIn0.deadbeef")
+    client.cookies.set("ag_session", "eyJyb2xlIjoiY21vIn0.deadbeef")
     assert client.get("/api/crew").status_code == 401
 
 
-def test_switch_role_keeps_gate_and_logout_clears_it(client):
+def test_switch_role_returns_to_picker(client):
     login(client, "cmo")
     client.post("/api/auth/switch-role")
-    assert client.get("/api/auth/state").json()["unlocked"] is True
+    assert client.get("/api/auth/state").json()["user"] is None
     assert client.get("/api/crew").status_code == 401
-    client.post("/api/auth/logout")
-    assert client.get("/api/auth/state").json()["unlocked"] is False
 
 
 # ---------------------------------------------------------- astronaut role ---

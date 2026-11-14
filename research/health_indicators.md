@@ -23,7 +23,10 @@ AstroGuardian-AI monitors key physiological parameters tailored to microgravity 
 * **Core Body Temperature:**
   * *Monitoring:* Tracks febrile responses or environmental thermal regulation anomalies ($> 37.8^\circ\text{C}$ or $< 35.5^\circ\text{C}$).
 
-## 4. Behavioural Health & Countermeasures
+## 4. Space Weather (live)
+* **Solar radiation storms:** the latest ≥10 MeV proton flux from NOAA's primary GOES satellite, on NOAA's S1–S5 scale. S1–S2 are shown but don't change alert tiers; S3 raises YELLOW (postpone EVAs) and S4+ raises RED (radiation shelter) for every crew member. NASA DONKI's solar-particle-event log provides context and a fallback.
+
+## 5. Behavioural Health & Countermeasures
 * **Fatigue (Samn-Perelli 7-point scale):** self-reported each check-in. YELLOW at 6 ("extremely tired, very difficult to concentrate"), RED at 7 ("completely exhausted, unable to function effectively").
 * **Mood (1–5 self-report):** YELLOW when ≤ 2 for 3 days in a row. A single bad day is not flagged.
 * **Sleep debt:** YELLOW when the 3-day average is below 6 h, even if no single night is below 5 h.
@@ -53,6 +56,20 @@ Every alert in the app shows its source. Rows marked **Team rule** are choices t
 | Exercise YELLOW | 3-day average < 75 min/day | ~2.5 h/day ISS schedule — [NASA](https://www.nasa.gov/blogs/spacestation/2025/07/16/muscle-and-exercise-studies-to-maintain-crew-health-in-space/). 50 % / 3-day cut-off is a **team rule** |
 | Radiation career limit | 600 mSv effective dose | NASA-STD-3001 Vol. 1 — [NASA radiation protection technical brief](https://www.nasa.gov/wp-content/uploads/2023/03/radiation-protection-technical-brief-ochmo.pdf). 80 % warning level is a **team rule** |
 | Radiation event limit | 250 mSv per solar particle event | NASA-STD-3001 (as above) |
+| Solar radiation storm YELLOW | NOAA S3 (≥10 MeV protons ≥ 1,000 pfu), live | [NOAA Space Weather Scales](https://www.spaceweather.gov/noaa-scales-explanation): S3 = "radiation hazard avoidance recommended for astronauts on EVA". Data: [NOAA SWPC GOES proton flux](https://www.spaceweather.gov/products/goes-proton-flux) |
+| Solar radiation storm RED | NOAA S4+ (≥ 10,000 pfu), live | NOAA scale: S4 = "unavoidable radiation hazard to astronauts on EVA". Applied only to measurements less than 2 h old (**team rule**) |
 | Personal baseline | \|z\| > 3 on one reading, or \|z\| > 2 on 2 of the last 3 days, over the previous 14 readings | **Team rule** (statistical; tuned to suppress single noisy readings) |
 | Trend prediction | Linear fit on 7 daily averages, projected 3 days | **Team rule** |
 | Stale data | Latest reading older than 36 h → UNKNOWN | **Team rule** |
+
+---
+
+## Simulator Calibration
+
+The demo crew's telemetry is simulated (no public dataset of astronaut in-flight vitals exists), but these values are calibrated to published spaceflight measurements:
+
+| Quantity | Simulated value | Source |
+|---|---|---|
+| Sleep per night | Baselines 6.1–6.6 h | 6.09 h mean on ISS over >4,200 in-flight nights; 8.5 h scheduled ([Barger et al., *Lancet Neurology* 2014](https://pmc.ncbi.nlm.nih.gov/articles/PMC4188436)) |
+| Radiation dose | ~0.65 mSv/day | DOSIS 3D, ISS Columbus module, dose equivalent ~647 µSv/day ([Berger et al., *J. Space Weather Space Clim.* 2017](https://www.swsc-journal.org/articles/swsc/full_html/2017/01/swsc160046/swsc160046.html)) |
+| Exercise | ~150 min/day | NASA's scheduled ISS countermeasure time ([NASA](https://www.nasa.gov/blogs/spacestation/2025/07/16/muscle-and-exercise-studies-to-maintain-crew-health-in-space/)) |

@@ -1,4 +1,4 @@
-import { Check, HeartPulse, KeyRound, Loader2, Lock, Satellite, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
+import { Check, HeartPulse, Loader2, Satellite, ShieldCheck, Stethoscope, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { api } from "../api.js";
 
@@ -28,47 +28,7 @@ function Shell({ children }) {
   );
 }
 
-export function Gate({ onUnlocked }) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
-  const [busy, setBusy] = useState(false);
-
-  async function submit(e) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    try {
-      await api.unlock(password);
-      onUnlocked();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Shell>
-      <form onSubmit={submit} className="mx-auto max-w-sm rounded-xl bg-surface-1 p-6 ring-1 ring-line">
-        <h1 className="flex items-center gap-2 text-lg font-semibold">
-          <Lock className="h-5 w-5 text-ink-2" aria-hidden /> Restricted demo
-        </h1>
-        <p className="mt-1 text-sm text-ink-3">Enter the access password to continue.</p>
-        <label htmlFor="pw" className="mt-5 block text-sm text-ink-2">Access password</label>
-        <input id="pw" type="password" autoFocus autoComplete="off" value={password}
-               onChange={(e) => setPassword(e.target.value)}
-               className="mt-1 w-full rounded-lg bg-surface-2 px-3 py-2 text-ink-1 ring-1 ring-line focus:outline-none focus:ring-series" />
-        {error && <p role="alert" className="mt-2 text-sm text-status-text-critical">{error}</p>}
-        <button type="submit" disabled={busy || !password}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-action px-4 py-2 font-medium text-white hover:bg-action-hover disabled:opacity-60">
-          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />} Unlock
-        </button>
-      </form>
-    </Shell>
-  );
-}
-
-export function RolePicker({ state, onChosen, onLock }) {
+export function RolePicker({ state, onChosen }) {
   const [astronautId, setAstronautId] = useState("");
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(null);
@@ -136,9 +96,6 @@ export function RolePicker({ state, onChosen, onLock }) {
           );
         })}
       </div>
-      <p className="mt-6 text-center">
-        <button onClick={onLock} className="h-11 px-3 text-sm text-ink-3 hover:text-ink-1">Lock</button>
-      </p>
     </Shell>
   );
 }

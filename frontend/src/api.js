@@ -46,10 +46,8 @@ const post = (path, body) => request(path, { method: "POST", body: body ? JSON.s
 
 export const api = {
   authState: () => request("/auth/state"),
-  unlock: (password) => post("/auth/unlock", { password }),
   chooseRole: (role, astronaut_id) => post("/auth/role", { role, astronaut_id }),
   switchRole: () => post("/auth/switch-role"),
-  logout: () => post("/auth/logout"),
 
   config: () => request("/config"),
   crew: () => request("/crew"),
@@ -59,12 +57,14 @@ export const api = {
   explain: (id) => post(`/astronauts/${id}/explain`),
   chat: (id, question, history) => post(`/astronauts/${id}/chat`, { question, history }),
   alerts: () => request("/alerts"),
+  spaceWeather: () => request("/space-weather"),
+  labs: () => request("/labs"),
   ackAlert: (id) => post(`/alerts/${id}/acknowledge`),
   noteAlert: (id, note) => post(`/alerts/${id}/note`, { note }),
   syncComplete: () => post("/sync/complete"),
 };
 
-// Remove cached API responses (called on logout / role switch so the next
+// Remove cached API responses (called on role switch so the next
 // person on a shared device can't see the previous role's data offline).
 export async function clearApiCache() {
   try {

@@ -75,6 +75,14 @@ _ACTIONS = {
     ("radiation_msv", "*"): [
         "Notify the CMO; ground radiation specialists should review upcoming EVA plans.",
     ],
+    ("space_weather", "RED"): [
+        "Go to the designated radiation shelter area now and stay there until mission control gives the all-clear.",
+        "Abort or postpone any EVA in progress or planned.",
+    ],
+    ("space_weather", "*"): [
+        "Postpone EVAs and stay in the more shielded modules until the storm subsides.",
+        "Review the shelter plan in case the storm escalates to S4.",
+    ],
     ("stress_level", "*"): [
         "Take a 10-minute break; use a guided breathing or relaxation exercise.",
         "Consider a private psychological support conference at the next comms window.",

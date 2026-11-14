@@ -1,15 +1,16 @@
-import { Bell, CloudOff, LogOut, Repeat, Satellite, ShieldCheck, Stethoscope, WifiOff } from "lucide-react";
+import { Bell, CloudOff, FlaskConical, Repeat, Satellite, ShieldCheck, Stethoscope, WifiOff } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { api, clearApiCache, on } from "./api.js";
-import { Gate, RolePicker } from "./components/Access.jsx";
+import { RolePicker } from "./components/Access.jsx";
 import { IconButton } from "./components/ui.jsx";
 
-// Screens (and the chart library they pull in) load only after login, so the
-// password and role screens stay small.
+// Screens (and the chart library they pull in) load only after a role is
+// chosen, so the role picker stays small.
 const AlertsLog = lazy(() => import("./components/AlertsLog.jsx"));
 const AstronautView = lazy(() => import("./components/AstronautView.jsx"));
 const GroundInbox = lazy(() => import("./screens/GroundInbox.jsx"));
 const Triage = lazy(() => import("./screens/Triage.jsx"));
+const Labs = lazy(() => import("./screens/Labs.jsx"));
 
 // Minimal hash router: #/   #/crew/ID   #/alerts
 function useRoute() {
@@ -24,7 +25,7 @@ function useRoute() {
 }
 
 export default function App() {
-  const [auth, setAuth] = useState(null); // {unlocked, user, roles, astronauts}
+  const [auth, setAuth] = useState(null); // {user, roles, astronauts}
   const [authError, setAuthError] = useState(null);
 
   const loadAuth = useCallback(async () => {
@@ -55,18 +56,17 @@ export default function App() {
       </div>
     );
   }
-  if (!auth.unlocked) return <Gate onUnlocked={loadAuth} />;
-  if (!auth.user) return <RolePicker state={auth} onChosen={loadAuth} onLock={() => leave(api.logout)} />;
-  return <Shell user={auth.user} onSwitchRole={() => leave(api.switchRole)} onLock={() => leave(api.logout)} />;
+  if (!auth.user) return <RolePicker state={auth} onChosen={loadAuth} />;
+  return <Shell user={auth.user} onSwitchRole={() => leave(api.switchRole)} />;
 }
 
 const NAV = {
   astronaut: [],
-  cmo: [["", "Triage", Stethoscope], ["alerts", "Alert history", Bell]],
-  ground: [["", "Comms window", Satellite], ["alerts", "Alert history", Bell]],
+  cmo: [["", "Triage", Stethoscope], ["labs", "Labs", FlaskConical], ["alerts", "Alert history", Bell]],
+  ground: [["", "Comms window", Satellite], ["labs", "Labs", FlaskConical], ["alerts", "Alert history", Bell]],
 };
 
-function Shell({ user, onSwitchRole, onLock }) {
+function Shell({ user, onSwitchRole }) {
   const [route, go] = useRoute();
   const [crew, setCrew] = useState([]);
   const [config, setConfig] = useState(null);
@@ -98,16 +98,18 @@ function Shell({ user, onSwitchRole, onLock }) {
   const llm = config?.llm;
   // Old links (#/astronaut/ID) still work.
   const openId = (page === "crew" || page === "astronaut") ? param : null;
-  const home = page !== "alerts";
+  const home = page !== "alerts" && page !== "labs";
 
   let content;
   if (user.role === "astronaut") {
     content = <AstronautView key={user.astronaut_id} id={user.astronaut_id} user={user} llm={llm} pulse={tick} onChanged={refresh} />;
+  } else if (page === "labs") {
+    content = <Labs />;
   } else if (page === "alerts") {
     content = <AlertsLog user={user} onOpen={(id) => go(`crew/${id}`)} onChanged={refresh} />;
   } else {
     const Screen = user.role === "cmo" ? Triage : GroundInbox;
-    content = <Screen crew={crew} user={user} llm={llm} openId={openId} onChanged={refresh}
+    content = <Screen crew={crew} user={user} llm={llm} openId={openId} onChanged={refresh} pulse={tick}
                       onOpen={(id) => go(`crew/${id}`)} onClose={() => go("")} />;
   }
 
@@ -139,7 +141,6 @@ function Shell({ user, onSwitchRole, onLock }) {
               {user.role_label}{user.astronaut_id ? ` · ${user.astronaut_id}` : ""}
             </span>
             <IconButton icon={Repeat} label="Switch role" onClick={onSwitchRole} />
-            <IconButton icon={LogOut} label="Lock" onClick={onLock} />
           </div>
         </div>
         {llm?.demo_mode && (

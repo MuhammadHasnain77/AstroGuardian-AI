@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { api } from "../api.js";
 import AstronautView from "../components/AstronautView.jsx";
+import { SpaceWeatherStrip, useSpaceWeather } from "../components/SpaceWeather.jsx";
 import { headline, SEVERITY_RANK, StatusBadge, timeAgo } from "../components/Status.jsx";
 import { Button, Drawer, normalBand, SectionHeading, Sparkline } from "../components/ui.jsx";
 
@@ -12,7 +13,8 @@ const COLS = [
 ];
 
 /** CMO home: who needs me, in what order, and what changed. */
-export default function Triage({ crew, user, llm, openId, onOpen, onClose, onChanged }) {
+export default function Triage({ crew, user, llm, openId, onOpen, onClose, onChanged, pulse }) {
+  const sw = useSpaceWeather(pulse);
   const sorted = [...crew].sort((a, b) => SEVERITY_RANK[a.risk_level] - SEVERITY_RANK[b.risk_level]);
   const queue = sorted.filter((a) => a.open_alert && !a.open_alert.acknowledged);
   const open = crew.find((a) => a.id === openId);
@@ -23,6 +25,8 @@ export default function Triage({ crew, user, llm, openId, onOpen, onClose, onCha
         <h1 className="text-2xl font-semibold">Crew triage</h1>
         <p className="text-ink-2">Most urgent first. Select a crew member to review, log a reading or acknowledge.</p>
       </header>
+
+      <SpaceWeatherStrip sw={sw} />
 
       {queue.length > 0 && (
         <section aria-labelledby="queue-h">

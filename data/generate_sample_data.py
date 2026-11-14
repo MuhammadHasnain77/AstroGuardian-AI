@@ -9,6 +9,16 @@ Three astronauts, one morning reading per day for 21 days:
   ASTRO_03  stable, then an acute low-oxygen + tachycardia event on the
             final day (RED)
 
+Calibration (published spaceflight figures, not invented numbers):
+  sleep      baselines 6.1–6.6 h/night, around the 6.09 h ISS average measured
+             over >4,200 in-flight nights (Barger et al., Lancet Neurology 2014;
+             NASA schedules 8.5 h)
+  radiation  ~0.65 mSv/day dose equivalent, as measured by DOSIS 3D in the ISS
+             Columbus module (Berger et al., J. Space Weather Space Clim. 2017)
+  exercise   ~150 min/day, NASA's scheduled ISS countermeasure time
+Vitals (heart rate, SpO2, blood pressure, temperature) remain simulated: no
+public dataset of astronaut in-flight vitals exists.
+
 Run:  python data/generate_sample_data.py
 """
 
@@ -25,10 +35,10 @@ FIELDS = ["timestamp", "astronaut_id", "heart_rate", "spo2", "blood_pressure_sys
           "temperature", "sleep_hours", "stress_level", "fatigue", "mood", "exercise_minutes", "radiation_msv"]
 
 CREW = {
-    #            hr  spo2 sys dia  temp  sleep
-    "ASTRO_01": (64, 98, 118, 76, 36.6, 7.4),
-    "ASTRO_02": (70, 98, 122, 80, 36.7, 7.0),
-    "ASTRO_03": (66, 98, 116, 75, 36.6, 7.2),
+    #            hr  spo2 sys dia  temp  sleep (h, around the 6.09 h ISS mean)
+    "ASTRO_01": (64, 98, 118, 76, 36.6, 6.6),
+    "ASTRO_02": (70, 98, 122, 80, 36.7, 6.1),
+    "ASTRO_03": (66, 98, 116, 75, 36.6, 6.4),
 }
 
 
@@ -36,8 +46,11 @@ def clamp(v, lo, hi):
     return max(lo, min(hi, v))
 
 
-def stress_from(sleep, hr, base_hr):
-    score = (7 - sleep) + (hr - base_hr) / 8
+ISS_DOSE_MSV_PER_DAY = 0.65   # DOSIS 3D, Columbus module
+
+
+def stress_from(sleep, base_sleep, hr, base_hr):
+    score = (base_sleep + 0.5 - sleep) + (hr - base_hr) / 8
     return "High" if score > 2.5 else "Medium" if score > 1.0 else "Low"
 
 
@@ -55,7 +68,7 @@ def main():
             fatigue = 2.5 + rng.normal(0, 0.5)
             mood = 4.2 + rng.normal(0, 0.4)
             exercise = 150 + rng.normal(0, 12)
-            radiation = 0.5 + rng.normal(0, 0.05)       # ~ISS daily dose, mSv
+            radiation = ISS_DOSE_MSV_PER_DAY + rng.normal(0, 0.05)
 
             if aid == "ASTRO_02" and d >= DAYS - 8:          # gradual drift
                 k = d - (DAYS - 8) + 1
@@ -78,7 +91,7 @@ def main():
                 "blood_pressure_dia": round(dia),
                 "temperature": round(temp, 1),
                 "sleep_hours": round(max(0, sleep), 1),
-                "stress_level": stress_from(sleep, hr, hr0),
+                "stress_level": stress_from(sleep, sl0, hr, hr0),
                 "fatigue": int(clamp(round(fatigue), 1, 7)),
                 "mood": int(clamp(round(mood), 1, 5)),
                 "exercise_minutes": int(clamp(round(exercise), 0, 240)),

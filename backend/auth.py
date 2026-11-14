@@ -1,12 +1,10 @@
-"""Demo access control: a shared password gate, then a role choice.
+"""Demo role switcher: no password, the visitor just picks a role.
 
-Flow
-    1. POST /api/auth/unlock {password}       -> cookie {gate: true}
-    2. POST /api/auth/role   {role, astronaut_id?} -> cookie {gate, role, astronaut_id}
+    POST /api/auth/role {role, astronaut_id?} -> cookie {role, astronaut_id}
 
-The password (DEMO_PASSWORD, default "NASA") only keeps bots and casual
-visitors out of the public demo. It is NOT real authentication: anyone who
-knows it can pick any role. Permissions below are enforced on the server.
+This is NOT authentication: anyone can pick any role. It exists so each role
+gets its own view and its own permissions, which are enforced on the server.
+A flight system would use individual crew credentials.
 
 Sessions are stateless HMAC-signed cookies, so they work on serverless hosts.
 Set SECRET_KEY in production so cookies survive restarts and can't be forged.
@@ -18,7 +16,6 @@ import hmac
 import json
 import os
 import time
-from collections import defaultdict
 
 from fastapi import Depends, HTTPException, Request, Response
 
@@ -44,19 +41,12 @@ ROLES = {
     },
 }
 
-_failures: dict[str, list[float]] = defaultdict(list)
-
-
 def _secret() -> bytes:
-    # Fallback is derived from the password so sessions survive serverless cold
-    # starts even if SECRET_KEY is forgotten. That adds no access beyond what
-    # the password already grants (any role), but set SECRET_KEY anyway.
-    key = os.getenv("SECRET_KEY") or "astroguardian-session:" + _password()
+    # A fixed fallback keeps sessions valid across serverless cold starts. It
+    # grants nothing extra (anyone can already pick any role), but a forged
+    # cookie could skip the role picker, so set SECRET_KEY in production.
+    key = os.getenv("SECRET_KEY") or "astroguardian-demo-session"
     return hashlib.sha256(key.encode()).digest()
-
-
-def _password() -> str:
-    return os.getenv("DEMO_PASSWORD", "NASA")
 
 
 def sign(payload: dict) -> str:
@@ -92,19 +82,6 @@ def clear_cookie(response: Response):
     response.delete_cookie(COOKIE, path="/")
 
 
-def check_password(password: str, client: str) -> bool:
-    """Constant-time compare (case-insensitive) with a simple per-client throttle."""
-    now = time.time()
-    recent = [t for t in _failures[client] if now - t < 300]
-    _failures[client] = recent
-    if len(recent) >= 10:
-        raise HTTPException(429, "Too many attempts. Try again in a few minutes.")
-    ok = hmac.compare_digest(password.strip().upper().encode(), _password().upper().encode())
-    if not ok:
-        _failures[client].append(now)
-    return ok
-
-
 # -------------------------------------------------------------- dependencies ---
 
 class User:
@@ -137,8 +114,6 @@ def session(request: Request) -> dict:
 
 def current_user(request: Request) -> User:
     s = session(request)
-    if not s.get("gate"):
-        raise HTTPException(401, "Locked. Enter the access password.")
     role = s.get("role")
     if role not in ROLES:
         raise HTTPException(401, "Choose a role first.")

@@ -259,6 +259,24 @@ def _pattern_checks(series: pd.DataFrame | None, context: dict) -> list:
     return out
 
 
+# ------------------------------------------------------------- environment ---
+
+def _environment_checks(context: dict) -> list:
+    """Live space weather applies to every crew member, whatever their vitals."""
+    sw = (context or {}).get("space_weather")
+    if not sw or sw.get("s_level") is None:
+        return []
+    level, pfu = sw["s_level"], sw.get("proton_10mev_pfu")
+    flux = f"≥10 MeV proton flux {pfu:,.0f} pfu ({sw.get('source_label', 'NOAA')})" if pfu is not None else "NOAA"
+    if level >= T.SOLAR_STORM_RED_S:
+        return [_finding("space_weather", "RED", "environment",
+                         f"Severe solar radiation storm (S{level}) in progress: {flux}.", level, "noaa_s_scale")]
+    if level >= T.SOLAR_STORM_YELLOW_S:
+        return [_finding("space_weather", "YELLOW", "environment",
+                         f"Strong solar radiation storm (S{level}) in progress: {flux}.", level, "noaa_s_scale")]
+    return []
+
+
 # ------------------------------------------------------------------- trend ---
 
 # (metric, direction that is bad, limit to project against, source of limit)
@@ -329,6 +347,7 @@ def detect_risk(current: dict, baseline: dict | None = None,
                                  f"No valid {T.METRIC_LABELS[m].lower()} reading — status cannot be confirmed."))
 
     findings += _absolute_checks(current)
+    findings += _environment_checks(context or {})
     seen = {f["metric"] for f in findings}
     findings += [f for f in _pattern_checks(series, context or {}) if f["metric"] not in seen]
     seen = {f["metric"] for f in findings}
@@ -345,7 +364,7 @@ def detect_risk(current: dict, baseline: dict | None = None,
 
     # Most severe first; within a tier: missing data, measured limits, multi-day
     # patterns, personal drift, predictions; self-reported stress last.
-    kind_rank = {"missing": 0, "absolute": 1, "pattern": 2, "baseline": 3, "trend": 4}
+    kind_rank = {"missing": 0, "environment": 1, "absolute": 1, "pattern": 2, "baseline": 3, "trend": 4}
     findings.sort(key=lambda f: (-SEVERITY_ORDER[f["severity"]], f["metric"] == "stress_level",
                                  kind_rank.get(f["kind"], 9)))
     return {"risk_level": level, "findings": findings, "alerts": [f["message"] for f in findings]}

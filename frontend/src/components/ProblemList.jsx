@@ -9,6 +9,7 @@ const KIND = {
   pattern: "Multi-day pattern",
   trend: "Predicted within 3 days",
   missing: "Data problem",
+  environment: "Live space weather",
 };
 
 const CHART = {

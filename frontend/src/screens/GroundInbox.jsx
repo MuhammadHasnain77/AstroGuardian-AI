@@ -4,13 +4,15 @@ import { api } from "../api.js";
 import AdviceComposer from "../components/AdviceComposer.jsx";
 import AstronautView from "../components/AstronautView.jsx";
 import CrewTrends from "../components/CrewTrends.jsx";
+import { SpaceWeatherPanel, useSpaceWeather } from "../components/SpaceWeather.jsx";
 import { SEVERITY_RANK, StatusBadge, timeAgo } from "../components/Status.jsx";
 import { Button, Drawer, SectionHeading } from "../components/ui.jsx";
 
 const STATUS_TEXT = { open: "Open", resolved: "Resolved on board", superseded: "Replaced by a newer alert" };
 
 /** Ground flight surgeon home: what arrived this comms window, reply inline, compare the crew. */
-export default function GroundInbox({ crew, user, llm, openId, onOpen, onClose, onChanged }) {
+export default function GroundInbox({ crew, user, llm, openId, onOpen, onClose, onChanged, pulse }) {
+  const sw = useSpaceWeather(pulse);
   const [alerts, setAlerts] = useState(null);
   const [error, setError] = useState(null);
   const [marking, setMarking] = useState(false);
@@ -74,6 +76,8 @@ export default function GroundInbox({ crew, user, llm, openId, onOpen, onClose, 
           </ul>
         </section>
       )}
+
+      <SpaceWeatherPanel sw={sw} />
 
       <section aria-labelledby="trends-h">
         <SectionHeading aside="Last 14 days"><span id="trends-h">Crew trends</span></SectionHeading>

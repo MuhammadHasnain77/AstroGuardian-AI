@@ -6,6 +6,7 @@ import AiDrawer from "./AiDrawer.jsx";
 import AlertsLog from "./AlertsLog.jsx";
 import CheckIn from "./CheckIn.jsx";
 import ProblemList from "./ProblemList.jsx";
+import { SpaceWeatherStrip, useSpaceWeather } from "./SpaceWeather.jsx";
 import { headline, shortName, STATUS, StatusBadge, timeAgo } from "./Status.jsx";
 import TrendsView from "./TrendsView.jsx";
 import { Button, SectionHeading, Tabs } from "./ui.jsx";
@@ -27,6 +28,7 @@ export default function AstronautView({ id, user, llm, onChanged, inPanel, pulse
   const [acking, setAcking] = useState(false);
   const can = (p) => user.permissions.includes(p);
   const self = user.astronaut_id === id;
+  const sw = useSpaceWeather(inPanel ? null : pulse);
 
   const load = useCallback(async () => {
     try {
@@ -108,6 +110,8 @@ export default function AstronautView({ id, user, llm, onChanged, inPanel, pulse
           <p className="mt-3 text-sm text-ink-2">Alert acknowledged by {alert.acknowledged_by}.</p>
         )}
       </section>
+
+      {!inPanel && <SpaceWeatherStrip sw={sw} />}
 
       {checkIn && (
         <section aria-labelledby="checkin-h" className="rounded-xl bg-surface-1 px-5 py-5 ring-1 ring-line">

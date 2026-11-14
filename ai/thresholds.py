@@ -27,6 +27,7 @@ METRIC_LABELS = {
     "exercise_minutes": "Countermeasure exercise",
     "radiation_msv": "Radiation dose",
     "timestamp": "Data freshness",
+    "space_weather": "Solar radiation storm",
 }
 
 METRIC_UNITS = {
@@ -51,6 +52,7 @@ SOURCES = {
     "personal": "Personal baseline: z-score vs. this astronaut's previous readings",
     "trend": "Linear trend on daily averages, projected 3 days ahead",
     "team": "Team rule — needs flight-surgeon review",
+    "noaa_s_scale": "NOAA Space Weather Scale, solar radiation storms (S3: hazard avoidance recommended for astronauts on EVA; S4+: unavoidable hazard)",
 }
 
 # --- Heart rate (team_doc) ---
@@ -98,6 +100,10 @@ EXERCISE_AVG_BELOW = 75        # team: < 50 % of scheduled over 3 days
 RADIATION_CAREER_LIMIT_MSV = 600     # nasa_std_3001
 RADIATION_CAREER_YELLOW_FRAC = 0.8   # team: warn at 80 % of limit
 RADIATION_EVENT_LIMIT_MSV = 250      # nasa_std_3001 (per solar particle event)
+
+# --- Space weather (live NOAA GOES proton flux, ≥10 MeV) ---
+SOLAR_STORM_YELLOW_S = 3       # noaa_s_scale: avoid EVA
+SOLAR_STORM_RED_S = 4          # noaa_s_scale: unavoidable hazard on EVA -> shelter
 
 # --- Personal baseline ---
 BASELINE_WINDOW = 14
