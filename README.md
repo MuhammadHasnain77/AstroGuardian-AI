@@ -246,6 +246,14 @@ AstroGuardian-AI/
 ├── .github/workflows/    # CI: pytest on SQLite + Postgres, frontend tests and build
 └── docs/                 # System architecture and user guide
 ```
+## 👥 Team
+
+* **Muhammad Hasnain**
+* **Atta Ur Rehman**
+* **Abu Bakr Armaghan Mansoor**
+* **Mustafa Israr**
+* **Shuraim141**
+* **Abdul Rehman Javed**
 
 ---
 
