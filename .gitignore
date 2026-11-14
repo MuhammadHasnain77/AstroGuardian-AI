@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# AstroGuardian-AI
+node_modules/
+backend/astroguardian.db
+*.db
+
+# Impeccable engine binary (downloaded and checksum-verified on first run)
+.claude/skills/impeccable/scripts/bin/
